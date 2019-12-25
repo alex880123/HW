@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+</style>
+</head>
+<body> 
+<script src="https://jyunming-chen.github.io/tutsplus/js/KeyboardState.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/107/three.min.js">
+</script>
+<script src="https://threejs.org/examples/js/controls/OrbitControls.js">
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/stats.js/r16/Stats.min.js"></script>
+<script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+
+<script>
+
+var keyboard = new KeyboardState();
+var renderer, camera, controls, scene, axes;
+var stats;
+var theta1 = -0.2;
+var theta2 = 0.2;
+var tank, turn, turret;
+var Balls = [];
+var angle = 0;
+var SpotLight, lightSphere;
+
+class Ball {
+	constructor (mesh, x=0, y=0, z=0, a=0, b=0) {
+  	this.mesh = mesh;
+    scene.add (this.mesh);
+    this.pos = new THREE.Vector3(x,y,z);  // 初始位置
+    this.vel = new THREE.Vector3(60,a,b); // 初速
+    this.force = new THREE.Vector3(0,-20,0); // 重力
+    this.m = 1;
+  }
+  
+  update (dt) {
+  	this.vel.add ( this.force.clone().multiplyScalar (dt/this.m));
+  	this.pos.add ( this.vel.clone().multiplyScalar (dt));
+	
+    
+	if (this.pos.y < 0) {
+		this.pos.y = 0;
+		this.vel.y *= -0.85;
+    }
+	
+	if (this.pos.x > 250 || this.pos.y <= 0) {
+    	scene.remove (this.mesh);
+	}	
+	
+	let boxx1 = cube1.position.x,
+		boxy1 = cube1.position.y,
+		boxz1 = cube1.position.z;
+	
+	if(this.pos.x > boxx1-10 && this.pos.x < boxx1+10 &&
+		this.pos.y > boxy1-10 && this.pos.y < boxy1+10 &&
+		this.pos.z > boxz1-10 && this.pos.z < boxz1+10){
+		scene.remove (cube1);
+		scene.remove (this.mesh)
+	}
+	
+	let boxx2 = cube2.position.x,
+		boxy2 = cube2.position.y,
+		boxz2 = cube2.position.z;
+	
+	if(this.pos.x > boxx2-10 && this.pos.x < boxx2+10 &&
+		this.pos.y > boxy2-10 && this.pos.y < boxy2+10 &&
+		this.pos.z > boxz2-10 && this.pos.z < boxz2+10){
+		scene.remove (cube2);
+		scene.remove(this.mesh)
+	}
+	let boxx3 = cube3.position.x,
+		boxy3 = cube3.position.y,
+		boxz3 = cube3.position.z;
+	
+	if(this.pos.x > boxx3-10 && this.pos.x < boxx3+10 &&
+		this.pos.y > boxy3-10 && this.pos.y < boxy3+10 &&
+		this.pos.z > boxz3-10 && this.pos.z < boxz3+10){
+		scene.remove (cube3);
+		scene.remove(this.mesh)
+	}
+	
+	let boxx4 = cube4.position.x,
+		boxy4 = cube4.position.y,
+		boxz4 = cube4.position.z;
+	
+	if(this.pos.x > boxx4-10 && this.pos.x < boxx4+10 &&
+		this.pos.y > boxy4-10 && this.pos.y < boxy4+10 &&
+		this.pos.z > boxz4-10 && this.pos.z < boxz4+10){
+		scene.remove (cube4);
+		scene.remove(this.mesh)
+	}
+    this.mesh.position.copy (this.pos);
+  }  
+}
+
+init();
+animate();
+
+function buildParts() {
+    var parts = [];
+    
+	let loader = new THREE.TextureLoader();
+	loader.crossOrigin = '';
+	texture = loader.load('https://i.imgur.com/lucRkZ7.jpg');
+
+	var texMat = new THREE.MeshPhongMaterial({
+    map: texture
+  });
+  
+	var base = new THREE.Object3D();
+	var baseMesh = new THREE.Mesh (new THREE.BoxGeometry (40,10,20), texMat);
+	base.add (baseMesh);
+	baseMesh.position.set (-10,5,0);
+	parts.push (base);
+
+    var turret = new THREE.Mesh (new THREE.CylinderGeometry (10,10,10, 30),texMat);
+    parts.push (turret);
+    
+    turn = new THREE.Object3D();
+    var turnMesh = new THREE.Mesh (new THREE.CylinderGeometry (1.5, 1.5, 10, 30), texMat);
+    turn.add (turnMesh);
+    turnMesh.rotation.x = Math.PI/2;
+    parts.push (turn);
+    
+    var cannon = new THREE.Object3D()
+    var cannon0 = new THREE.Object3D()
+    var cannonMesh = new THREE.Mesh (new THREE.CylinderGeometry (1.5, 1.5, 10, 30), texMat);
+    cannon0.add (cannonMesh);
+    cannonMesh.position.y = 5;
+    cannon.add (cannon0);
+    cannon0.rotation.z = -Math.PI/2;
+    parts.push (cannon);
+    
+    return parts;
+}
+
+function buildTank(){
+
+  let parts = buildParts();
+  
+  tank = new THREE.Object3D();
+
+  let base = parts[0]//基座
+  tank.add (base);
+  
+  turret = parts[1]//圓柱
+  tank.add (turret)
+  turret.position.set (0, 15, 0);
+  console.log (theta1);
+  turret.rotation.y = theta1;
+  
+  let turn = parts[2]//砲座
+  turn.position.x = 10
+  turn.rotation.z = theta2;
+  turret.add (turn);
+  
+  cannon = parts[3]//砲管
+  turn.add (cannon);
+  
+  return tank;
+}
+
+function init() {
+
+  renderer = new THREE.WebGLRenderer({
+    antialias: true
+  });
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setClearColor(0x888888);
+
+  document.body.appendChild(renderer.domElement);
+
+
+  camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 1, 1000);
+  camera.position.y = 400; 
+  camera.position.x = -400;
+  controls = new THREE.OrbitControls(camera, renderer.domElement);
+
+  scene = new THREE.Scene();
+
+	let loader = new THREE.TextureLoader()
+	loader.crossOrigin = '';
+
+  textureG = loader.load('https://i.imgur.com/HXvHFkc.jpg');
+  
+  var meshG = new THREE.Mesh(new THREE.PlaneGeometry(500, 500), 
+  new THREE.MeshBasicMaterial(
+  {map: textureG
+  ,side: THREE.DoubleSide}))
+  meshG.rotation.x = -Math.PI / 2;
+  scene.add(meshG);
+
+  
+	
+  
+  let tank = buildTank();
+  scene.add (tank);
+  
+  //燈光
+  SpotLight = new THREE.PointLight('cyan');	
+  scene.add(SpotLight);
+  lightSphere = new THREE.Mesh(new THREE.SphereGeometry(10),
+  new THREE.MeshBasicMaterial({
+      color: 'cyan',
+      wireframe: true
+  }));
+  scene.add(lightSphere);
+  
+  clock = new THREE.Clock();
+  
+  //創造方形標靶
+	let geometry = new THREE.BoxGeometry( 20, 20, 20 );
+	let material = new THREE.MeshBasicMaterial( {color:'brown'} );
+			
+	cube1 = new THREE.Mesh( geometry, material );
+	cube1.position.set(240,20,getRandom(-200,200));
+	scene.add (cube1);
+			
+	cube2 = new THREE.Mesh( geometry, material );
+	cube2.position.set(240,20,getRandom(-200,200));
+	scene.add (cube2);
+		  
+	cube3 = new THREE.Mesh( geometry, material );
+	cube3.position.set(240,20,getRandom(-200,200));
+	scene.add (cube3);
+		  
+	cube4 = new THREE.Mesh( geometry, material );
+	cube4.position.set(240,20,getRandom(-200,200));
+	scene.add (cube4);
+		  
+	ball = new THREE.Mesh (new THREE.SphereGeometry(2,20,20),new THREE.MeshBasicMaterial({color: 'red'}));
+	
+}
+//取亂數
+function getRandom(min,max){
+	return Math.floor(Math.random()*(max-min+1))+min;
+};
+
+function animate() {
+  
+	keyboard.update();
+	
+	if (keyboard.pressed ('Q')) {
+	if(turret.rotation.y < Math.PI/4)
+  		turret.rotation.y += 0.01
+	}
+	
+	if(keyboard.pressed('E')){
+	if(turret.rotation.y > -Math.PI/4)
+  		turret.rotation.y -= 0.01
+    }
+	
+	if(keyboard.pressed ('R')){
+	if(turn.rotation.z < Math.PI/4)
+		turn.rotation.z +=0.01
+	}
+	
+	if(keyboard.pressed ('V')){
+	if(turn.rotation.z > -Math.PI/4)
+		turn.rotation.z -=0.01
+	}
+	
+	if (keyboard.pressed ('W')){
+  		tank.position.x += 1
+	}
+	
+    else if(keyboard.pressed ('S')){
+  		tank.position.x -= 1
+	}
+	
+	angle += 0.01;
+	SpotLight.position.set(100 * Math.cos(angle), 70, 100 * Math.sin(angle));
+	lightSphere.position.copy(SpotLight.position);
+	
+	//取得炮口位置
+	var val = cannon.localToWorld(new THREE.Vector3(10,0,0));
+	
+	let x=0,y=0,z=0;
+	
+	x = val.x;
+	y = val.y;
+	z = val.z;
+	
+	//發射砲彈
+	if (keyboard.down ('F')){
+		
+		Balls.push(new Ball (ball.clone(), x, y, z, (turn.rotation.z*70), 50*Math.sin(-turret.rotation.y) ));
+	}	
+	let dt = clock.getDelta();
+	
+	Balls.forEach(function (b){b.update (dt)});
+		
+
+	renderer.render (scene, camera);
+
+	requestAnimationFrame (animate);
+  
+}
+
+</script>
+</body>
+</html>

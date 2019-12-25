@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+
+#toggle {
+  position: absolute;
+  top: 20%;
+  right:55%;
+  width: 200px;
+  padding: 10px;
+  text-align: center;
+  color: #808080
+}
+
+#change {
+  position: absolute;
+  top: 20%;
+  right:20%;
+  width:200px;
+  padding: 10px;
+  text-align: center;
+  color: #808080
+}
+
+#info {
+  position: absolute;
+  top: 5%;
+  right:20%;
+  font-size:40px;
+  width:500px;
+  padding: 10px;
+  text-align: center;
+  color: #000080
+}
+
+body {
+	overflow: hidden
+}
+</style>
+</head>
+
+<body>
+<div id="info">HW1 I3B37 楊鎮宇</div>
+<button id="toggle" >Toggle Turn</button>
+<button id="change" >QUARTZ</button>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/107/three.min.js"></script>
+<script src="https://threejs.org/examples/js/controls/OrbitControls.js"></script>
+<script src="https://code.jquery.com/jquery-2.1.4.min.js">
+</script>
+<script>
+
+var renderer, scene, camera;
+var controls,texture;
+var angle = 0;
+var ushape;
+var turn = false;
+var turn1 = true;
+var turn2 = false;
+var turn3 = false;
+var i=0;
+var x=0;
+
+
+
+$("#toggle").click(function(){
+turn = !turn;
+if(turn)
+	$("#toggle").text('PAUSE');
+else
+	$("#toggle").text('RESTART');
+});
+
+$("#change").click(function(){
+
+//tff
+if(turn1 && !turn2 && !turn3){
+	$("#change").text('SECTOR');//ttf
+	turn2 = true;
+}
+else if(turn1 && turn2 && !turn3){
+	$("#change").text('CONTINUOUS');//ttt
+	turn3 = true;
+	scene.remove(ushape);
+	scene.remove( circle );
+	scene.remove(cube);
+	scene.add(circle5);
+}
+else if(turn1 && turn2 && turn3){
+	$("#change").text('QUARTZ');//tff
+	turn2 = false;
+	turn3 = false;
+	scene.add(circle);
+	scene.add( ushape );
+	scene.add(cube);
+	scene.remove(circle5);
+}
+
+});
+
+init();
+//animate();
+animate1();
+	var geometry = new THREE.CircleGeometry( 50, 32 );
+	var material = new THREE.MeshBasicMaterial( { color: 0xffffff } );
+	var circle = new THREE.Mesh( geometry, material );
+	circle.position.set (0,0,0);
+	scene.add( circle );
+	
+	var geometry1 = new THREE.BoxGeometry( 10, 20, 10 );
+	var material1 = new THREE.MeshBasicMaterial( {color: 0xc0c0c0} );
+	var cube = new THREE.Mesh( geometry1, material1 );
+	cube.position.set (0,50,0);
+	scene.add( cube );
+	
+	var geometry5 = new THREE.CircleGeometry( 40, 32,Math.PI/2,Math.PI*2 );
+	var material5 = new THREE.MeshBasicMaterial( { 
+	color: 0xffffff,
+	side:THREE.DoubleSide
+	} );
+	var circle5 = new THREE.Mesh( geometry5, material5 );
+	circle5.position.set (0,0,5);
+		
+		
+		
+	
+function init () {
+	
+	renderer = new THREE.WebGLRenderer();
+	document.body.appendChild (renderer.domElement);
+	var width = window.innerWidth;
+	var height = window.innerHeight;
+	
+	renderer.setSize (width, height);
+	
+	renderer.setClearColor (0x888888);
+	
+	scene = new THREE.Scene();
+	var grid = new THREE.GridHelper(200,20, 'red', 'white');
+	scene.add (grid);
+	var axes = new THREE.AxesHelper (5);
+	scene.add (axes);
+	
+	camera = new THREE.PerspectiveCamera (35, width/height, 1, 3000);
+	camera.position.y = 160;
+	camera.position.z = 400;
+	camera.lookAt (new THREE.Vector3(0,0,0));
+	
+	controls = new THREE.OrbitControls(camera, renderer.domElement);
+	
+	// build U-shape
+	ushape = new THREE.Group();
+	
+	var geometry2 = new THREE.BoxGeometry(40,8,8);
+	var	material2 = new THREE.MeshBasicMaterial( {color: 0x808080} );
+	var base2 = new THREE.Mesh ( geometry2, material2 );
+	base2.position.set (0,0,5);
+	base2.rotateZ(-Math.PI/2);
+	ushape.add (base2);
+	
+	var geometry3 = new THREE.ConeGeometry( 6, 20, 32 );
+	var	material3 = new THREE.MeshBasicMaterial( {color: 0x000000} );
+	var base3 = new THREE.Mesh ( geometry3, material3 );
+	base3.position.set (0,30,5);
+	ushape.add (base3);
+	
+	scene.add (ushape);
+
+	
+	window.addEventListener('resize', onWindowResize, false);
+	
+}
+
+function onWindowResize() {
+  
+	var width = window.innerWidth;
+  var height = window.innerHeight;
+  camera.aspect = width / height;
+  camera.updateProjectionMatrix();
+  renderer.setSize(width, height);
+	
+}
+
+
+
+function animate1() {
+	
+	if(turn && !turn2 && !turn3) {//tff
+	angle -= Math.PI*2/60/60;
+	ushape.rotation.z = angle;
+	}
+	else if(turn && turn2 && !turn3) {//ttf
+		angle -= Math.PI*2/60/60;
+		if(-i*(Math.PI/30) <= -angle){
+		ushape.rotation.z = angle;
+		i--;
+		}
+	}	
+	
+	else if(turn && turn2 && turn3){//ttt
+		angle -= Math.PI*2/60/60;
+		let geometry5 = new THREE.CircleGeometry(40,32,Math.PI/2,angle);
+		scene.remove(circle5);
+		circle5 = new THREE.Mesh(geometry5,material5);
+		scene.add(circle5);
+
+		
+		}
+	requestAnimationFrame(animate1);
+	render();
+}
+
+function render() {
+	
+	renderer.render(scene, camera);
+	
+}
+
+</script>
+</body>
+
+</html>
