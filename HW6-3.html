@@ -229,35 +229,6 @@ body {
 	}
 </script>
 
-<script id="fs-mosaic" type="x-shader/x-fragment">
-  uniform sampler2D texture; 
-  varying vec2 vUv; 
-  vec2 vUvm;
-  uniform float gran;
-  uniform float front;
-  uniform vec2 headNDC;
-  uniform float headSize;
-  
-  void main() {
-    float d = distance (headNDC, vUv); 
-	    float borderWidth = headSize*0.1;
-    if (d < headSize) {
-  	  vUvm = floor (vUv/gran)*gran;   
-   if(front==1.0)	  
-  		gl_FragColor = texture2D(texture, vUvm); 
-		else{
-		vUvm = vUv;
-        	gl_FragColor = texture2D(texture, vUvm); 
-		}
-    } else if (d < headSize+borderWidth&&front==1.0) {
-       gl_FragColor = vec4(1,0,0,1);
-    } else {
-      vUvm = vUv;
-        	gl_FragColor = texture2D(texture, vUvm); 
-    }
-   }
-</script>
-
 <script>
 javascript:(function(){var script=document.createElement('script');script.onload=function(){var stats=new Stats();document.body.appendChild(stats.dom);requestAnimationFrame(function loop(){stats.update();requestAnimationFrame(loop)});};script.src='https://mrdoob.github.io/stats.js/build/stats.min.js';document.head.appendChild(script);})()
 
@@ -399,36 +370,6 @@ function init() {
   sceneColor.add (new THREE.PointLightHelper (light,5))
   sceneGrey.add (light2);
   
-  var uniforms0 = {
-    headNDC: {
-      type: 'v2',
-      value: null
-    },
-    texture: {
-      type: 't',
-      value: renderTarget.texture
-    }, 
-    gran: {
-    	type: 'f',
-      value: 0
-    }, 
-	headSize: {
-     type: 'f',
-     value: 0
-    },
-	front: {
-    	type: 'f',
-      value: 0
-    }
-	
-  };
-	var vertShader0 = document.getElementById('vs-mosaic').innerHTML;
-  var fragShader0 = document.getElementById('fs-mosaic').innerHTML;
-	material_shh = new THREE.ShaderMaterial({
-    uniforms: uniforms0,
-    vertexShader: vertShader0,
-    fragmentShader: fragShader0
-  });
   
   ////////////////////////////////////////////////////////////////////////
    var uniforms = {
